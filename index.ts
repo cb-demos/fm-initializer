@@ -69,7 +69,8 @@ async function setupFMAppAndEnvironment() {
         headers: postHeaders,
       }
     );
-    await timer(10000);
+    appId = newApplication.id;
+    await timer(5000);
     console.log(`Created new app ${appName} with id ${newApplication.id}`);
   }
 
@@ -158,6 +159,7 @@ async function initRollout() {
     await initRollout();
     await createTargetGroups();
     console.log("Done loading CloudBees Feature Management");
+    process.exit(0);
   } catch (e) {
     console.error(e);
   }

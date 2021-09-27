@@ -11,4 +11,8 @@ pnpm install
 pnpm start
 ```
 
+## Run it in Kubernetes
 
+```shell
+kubectl run fm-init --image docker.io/ldonleycb/fm-initializer:2 --env="USER_TOKEN=" --env="APP_NAME="
+```
