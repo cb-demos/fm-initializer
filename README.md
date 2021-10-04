@@ -22,5 +22,7 @@ pnpm start
 ## Run it in Kubernetes
 
 ```shell
-sed s/REPLACE_USER_TOKEN/YOUR_TOKEN/g ./k8s/fm-initializer.yaml | sed s/REPLACE_APP_NAME/YOUR_NAME/g  | kubectl create -f -
+YOUR_USER_TOKEN=
+YOUR_APP_NAME=
+curl -s https://raw.githubusercontent.com/cb-demos/fm-initializer/main/k8s/fm-initializer.yaml | cat | sed s/REPLACE_USER_TOKEN/$YOUR_USER_TOKEN/g ./k8s/fm-initializer.yaml | sed s/REPLACE_APP_NAME/$YOUR_APP_NAME/g  | kubectl create -f -
 ```
