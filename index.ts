@@ -2,9 +2,14 @@ import axios from "axios";
 
 require("dotenv").config();
 import Rox from "rox-node";
+import { Buffer } from "buffer";
 
 const userToken = process.env.USER_TOKEN || "";
 const appName = process.env.APP_NAME || "";
+const cdProject = process.env.CD_PROJECT || "";
+const cdUser = process.env.CD_USER || "";
+const cdToken = process.env.CD_TOKEN || "";
+const cdBaseUrl = process.env.CD_BASE_URL || "";
 
 const environmentKeys: { [key: string]: any } = {
   production: {
@@ -153,11 +158,35 @@ async function initRollout() {
   await Rox.setup(environmentKeys.production.key, options);
 }
 
+const cdAuth = (): string => {
+  return Buffer.from(`${cdUser}:${cdToken}`, "utf-8").toString("base64");
+};
+
+const cdHeaders = {
+  authorization: `Basic ${cdAuth().trim()}`,
+};
+
+async function sendPropertiesToCDRO() {
+  for (const [key, value] of Object.entries(environmentKeys)) {
+    const urlEndpoint = `/projects/${cdProject}/${value.name}-FMKey?value=${value.key}`;
+    await axios.put(
+      `${cdBaseUrl}/properties/${urlEndpoint}`,
+      {},
+      {
+        headers: cdHeaders,
+      }
+    );
+  }
+}
+
 (async () => {
   try {
     await setupFMAppAndEnvironment();
     await initRollout();
     await createTargetGroups();
+    if (cdProject && cdBaseUrl && cdUser && cdToken) {
+      await sendPropertiesToCDRO();
+    }
     console.log("Done loading CloudBees Feature Management");
     process.exit(0);
   } catch (e) {
