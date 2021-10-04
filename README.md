@@ -24,5 +24,5 @@ pnpm start
 ```shell
 YOUR_USER_TOKEN=
 YOUR_APP_NAME=
-curl -s https://raw.githubusercontent.com/cb-demos/fm-initializer/main/k8s/fm-initializer.yaml | cat | sed s/REPLACE_USER_TOKEN/$YOUR_USER_TOKEN/g ./k8s/fm-initializer.yaml | sed s/REPLACE_APP_NAME/$YOUR_APP_NAME/g  | kubectl create -f -
+curl -s https://raw.githubusercontent.com/cb-demos/fm-initializer/main/k8s/fm-initializer.yaml | cat | sed s/REPLACE_USER_TOKEN/$YOUR_USER_TOKEN/g | sed s/REPLACE_APP_NAME/$YOUR_APP_NAME/g | kubectl create -f -
 ```
