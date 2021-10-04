@@ -22,5 +22,5 @@ pnpm start
 ## Run it in Kubernetes
 
 ```shell
-kubectl run fm-init --image docker.io/ldonleycb/fm-initializer:2 --env="USER_TOKEN=" --env="APP_NAME="
+sed s/REPLACE_USER_TOKEN/YOUR_TOKEN/g ./k8s/fm-initializer.yaml | sed s/REPLACE_APP_NAME/YOUR_NAME/g  | kubectl create -f -
 ```
