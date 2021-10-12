@@ -177,6 +177,14 @@ async function sendPropertiesToCDRO() {
       }
     );
   }
+  const urlEndpoint = `/projects/${cdProject}/FMAppKey?value=${appId}`;
+  await axios.put(
+    `${cdBaseUrl}/properties/${urlEndpoint}`,
+    {},
+    {
+      headers: cdHeaders,
+    }
+  );
 }
 
 (async () => {

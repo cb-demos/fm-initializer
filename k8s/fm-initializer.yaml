@@ -8,7 +8,7 @@ spec:
     spec:
       containers:
         - name: fm-init
-          image: docker.io/ldonleycb/fm-initializer:3
+          image: docker.io/ldonleycb/fm-initializer:4
           env:
             - name: USER_TOKEN
               value: "REPLACE_USER_TOKEN"
