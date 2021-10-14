@@ -98,7 +98,7 @@ async function setupFMAppAndEnvironment() {
     } else {
       // Otherwise create them
       await timer(1500);
-      const { data: key } = await axios.put(
+      const { data } = await axios.put(
         `https://x-api.rollout.io/public-api/applications/${appId}/environments/key`,
         {
           name: value.name,
@@ -108,7 +108,7 @@ async function setupFMAppAndEnvironment() {
           headers: postHeaders,
         }
       );
-      environmentKeys[key].key = key;
+      environmentKeys[key].key = data;
       console.log(`Environment ${value.name} created`);
     }
   }
