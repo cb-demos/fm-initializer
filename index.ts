@@ -98,7 +98,7 @@ async function setupFMAppAndEnvironment() {
     } else {
       // Otherwise create them
       await timer(1500);
-      const { data: environment } = await axios.put(
+      const { data: key } = await axios.put(
         `https://x-api.rollout.io/public-api/applications/${appId}/environments/key`,
         {
           name: value.name,
@@ -108,7 +108,7 @@ async function setupFMAppAndEnvironment() {
           headers: postHeaders,
         }
       );
-      environmentKeys[key].key = environment.key;
+      environmentKeys[key].key = key;
       console.log(`Environment ${value.name} created`);
     }
   }
@@ -144,7 +144,7 @@ async function createTargetGroups() {
 }
 
 const flags = {
-  contrastButton: new Rox.Flag(),
+  contrastButtons: new Rox.Flag(),
 };
 
 Rox.setCustomBooleanProperty("isBetaUser", false);
