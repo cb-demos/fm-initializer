@@ -1,15 +1,24 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios"
 
-require("dotenv").config();
-import Rox from "rox-node";
-import { Buffer } from "buffer";
+require("dotenv").config()
+import Rox from "rox-node"
+import { Buffer } from "buffer"
 
-const userToken = process.env.USER_TOKEN || "";
-const appName = process.env.APP_NAME || "";
-const cdProject = process.env.CD_PROJECT || "";
-const cdUser = process.env.CD_USER || "";
-const cdToken = process.env.CD_TOKEN || "";
-const cdBaseUrl = process.env.CD_BASE_URL || "";
+const email = process.env.EMAIL || ""
+const userToken = process.env.USER_TOKEN || ""
+const appName = process.env.APP_NAME || ""
+const cdProject = process.env.CD_PROJECT || ""
+const cdUser = process.env.CD_USER || ""
+const cdToken = process.env.CD_TOKEN || ""
+const cdBaseUrl = process.env.CD_BASE_URL || ""
+
+type Applications = {
+  [id: string]: {
+    environments: {
+      [environmentName: string]: "read" | "write"
+    }
+  }
+}
 
 const environmentKeys: { [key: string]: any } = {
   production: {
@@ -28,23 +37,23 @@ const environmentKeys: { [key: string]: any } = {
     name: "Dev",
     key: null,
   },
-};
+}
 
 if (!userToken || !appName) {
-  throw new Error("USER_TOKEN & APP_NAME environment variables required.");
+  throw new Error("USER_TOKEN & APP_NAME environment variables required.")
 }
 
 const getHeaders = {
   accept: "application/json",
   authorization: `Bearer ${userToken}`,
-};
+}
 
-let appId: string;
+let appId: string
 
 const postHeaders = {
   ...getHeaders,
   "content-type": "application/json",
-};
+}
 
 async function setupFMAppAndEnvironment() {
   const { data: applications } = await axios.get(
@@ -52,19 +61,19 @@ async function setupFMAppAndEnvironment() {
     {
       headers: getHeaders,
     }
-  );
+  )
   const appMatches = applications.filter(
     (item: { name: string; id: string }) => item.name === appName
-  );
+  )
   if (appMatches.length > 0) {
-    appId = appMatches[0].id;
+    appId = appMatches[0].id
     if (appMatches.length > 1) {
-      console.log(`Multiple matching apps found, using ${appId}`);
+      console.log(`Multiple matching apps found, using ${appId}`)
     }
-    console.log(`Matching app found, using ${appId}`);
+    console.log(`Matching app found, using ${appId}`)
   } else {
-    console.log("No existing app with desired name, creating now.");
-    await timer(1500);
+    console.log("No existing app with desired name, creating now.")
+    await timer(1500)
     const { data: newApplication } = await axios.post(
       "https://x-api.rollout.io/public-api/applications",
       {
@@ -73,31 +82,31 @@ async function setupFMAppAndEnvironment() {
       {
         headers: postHeaders,
       }
-    );
-    appId = newApplication.id;
-    await timer(5000);
-    console.log(`Created new app ${appName} with id ${newApplication.id}`);
+    )
+    appId = newApplication.id
+    await timer(5000)
+    console.log(`Created new app ${appName} with id ${newApplication.id}`)
   }
 
   //  Get current environments
-  await timer(1500);
+  await timer(1500)
   const { data: environments } = await axios.get(
     `https://x-api.rollout.io/public-api/applications/${appId}/environments`,
     {
       headers: getHeaders,
     }
-  );
+  )
   for (const [key, value] of Object.entries(environmentKeys)) {
     const match = environments.filter(
       (env: { name: string }) => env.name === value.name
-    );
+    )
     if (match.length > 0) {
       //  If they do exist, update the map
-      console.log(`Environment ${value.name} already exists.`);
-      environmentKeys[key].key = match[0].key;
+      console.log(`Environment ${value.name} already exists.`)
+      environmentKeys[key].key = match[0].key
     } else {
       // Otherwise create them
-      await timer(1500);
+      await timer(1500)
       const { data } = await axios.put(
         `https://x-api.rollout.io/public-api/applications/${appId}/environments/key`,
         {
@@ -107,105 +116,185 @@ async function setupFMAppAndEnvironment() {
         {
           headers: postHeaders,
         }
-      );
-      environmentKeys[key].key = data;
-      console.log(`Environment ${value.name} created`);
+      )
+      environmentKeys[key].key = data
+      console.log(`Environment ${value.name} created`)
     }
   }
 }
 
 async function createTargetGroups() {
-  await timer(1500);
+  await timer(1500)
   const { data: currentTargetGroups } = await axios.get(
     `https://x-api.rollout.io/public-api/applications/${appId}/target-groups`,
     {
       headers: getHeaders,
     }
-  );
+  )
 
   for (const tg of targetGroups) {
     const match = currentTargetGroups.filter(
       (item: { name: string }) => item.name === tg.name
-    );
+    )
     if (match > 0) {
-      console.log(`Target group ${tg.name} already exists`);
+      console.log(`Target group ${tg.name} already exists`)
     } else {
-      await timer(1500);
+      await timer(1500)
       const { data: newTargetGroup } = await axios.put(
         `https://x-api.rollout.io/public-api/applications/${appId}/target-groups`,
         tg,
         {
           headers: postHeaders,
         }
-      );
-      console.log(`Created ${tg.name}`);
+      )
+      console.log(`Created ${tg.name}`)
     }
   }
 }
 
 const flags = {
   contrastButtons: new Rox.Flag(),
-};
+}
 
-Rox.setCustomBooleanProperty("isBetaUser", false);
-Rox.setCustomStringProperty("accountType", "dental");
+Rox.setCustomBooleanProperty("isBetaUser", false)
+Rox.setCustomStringProperty("accountType", "dental")
 
 async function initRollout() {
-  const options = {};
+  const options = {}
 
-  Rox.register("frontend", flags);
+  Rox.register("frontend", flags)
 
-  await Rox.setup(environmentKeys.production.key, options);
+  await Rox.setup(environmentKeys.production.key, options)
+}
+
+type UserResponse = {
+  name: string
+  email: string
+  teamAdmin: boolean
+  applications: Applications
+}
+
+async function createOrUpdateUser() {
+  await timer(1500)
+  const newApplication = {} as Applications
+  newApplication[appId] = {
+    environments: {
+      Production: "write",
+      "Pre-Prod": "write",
+      QA: "write",
+      Dev: "write",
+    },
+  }
+  let userData
+  try {
+    const resp = await axios.get(
+      `https://x-api.rollout.io/public-api/users/${email}`,
+      {
+        headers: getHeaders,
+      }
+    )
+    userData = resp.data as UserResponse
+  } catch (e) {
+    const err = e as AxiosError
+    console.log("User doesn't exist")
+    console.error(err.response?.data)
+    console.log(err.response?.status)
+  }
+  await timer(1500)
+  if (!userData) {
+    try {
+      const resp = await axios.put(
+        `https://x-api.rollout.io/public-api/users`,
+        {
+          email: email,
+          name: email,
+          teamAdmin: false,
+          applications: newApplication,
+        },
+        {
+          headers: postHeaders,
+        }
+      )
+    } catch (e) {
+      const err = e as AxiosError
+      console.log("Unable to create user")
+      console.error(err.response?.data)
+      console.log(err.response?.status)
+    }
+  } else {
+    const transformedUser = {
+      ...userData,
+      applications: {
+        ...userData.applications,
+        ...newApplication,
+      },
+    } as UserResponse
+    try {
+      const resp = await axios.put(
+        `https://x-api.rollout.io/public-api/users`,
+        transformedUser,
+        {
+          headers: postHeaders,
+        }
+      )
+    } catch (e) {
+      const err = e as AxiosError
+      console.log("Unable to update user")
+      console.error(err.response?.data)
+      console.log(err.response?.status)
+    }
+  }
 }
 
 const cdAuth = (): string => {
-  return Buffer.from(`${cdUser}:${cdToken}`, "utf-8").toString("base64");
-};
+  return Buffer.from(`${cdUser}:${cdToken}`, "utf-8").toString("base64")
+}
 
 const cdHeaders = {
   authorization: `Basic ${cdAuth().trim()}`,
-};
+}
 
 async function sendPropertiesToCDRO() {
   for (const [key, value] of Object.entries(environmentKeys)) {
-    const urlEndpoint = `/projects/${cdProject}/${value.name}-FMKey?value=${value.key}`;
+    const urlEndpoint = `/projects/${cdProject}/${value.name}-FMKey?value=${value.key}`
     await axios.put(
       `${cdBaseUrl}/properties/${urlEndpoint}`,
       {},
       {
         headers: cdHeaders,
       }
-    );
+    )
   }
-  const urlEndpoint = `/projects/${cdProject}/FMAppKey?value=${appId}`;
+  const urlEndpoint = `/projects/${cdProject}/FMAppKey?value=${appId}`
   await axios.put(
     `${cdBaseUrl}/properties/${urlEndpoint}`,
     {},
     {
       headers: cdHeaders,
     }
-  );
+  )
 }
 
-(async () => {
+;(async () => {
   try {
-    await setupFMAppAndEnvironment();
-    await initRollout();
-    await createTargetGroups();
+    await setupFMAppAndEnvironment()
+    await initRollout()
+    await createTargetGroups()
+    await createOrUpdateUser()
     if (cdProject && cdBaseUrl && cdUser && cdToken) {
-      await sendPropertiesToCDRO();
+      await sendPropertiesToCDRO()
     }
-    console.log("Done loading CloudBees Feature Management");
-    process.exit(0);
+    console.log("Done loading CloudBees Feature Management")
+    process.exit(0)
   } catch (e) {
-    console.error(e);
+    console.error(e)
   }
-})();
+})()
 
 // Current FM rate limit is 1req/sec so need to timeout to avoid hitting those
 const timer = (ms: number | undefined) => {
-  return new Promise((res) => setTimeout(res, ms));
-};
+  return new Promise((res) => setTimeout(res, ms))
+}
 
 const targetGroups = [
   {
@@ -246,4 +335,4 @@ const targetGroups = [
       },
     ],
   },
-];
+]

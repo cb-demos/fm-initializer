@@ -8,16 +8,18 @@ spec:
     spec:
       containers:
         - name: fm-init
-          image: docker.io/ldonleycb/fm-initializer:6
+          image: docker.io/ldonleycb/fm-initializer:7
           env:
-            - name: USER_TOKEN
-              value: "REPLACE_USER_TOKEN"
             - name: APP_NAME
               value: "REPLACE_APP_NAME"
             - name: CD_PROJECT
               value: "REPLACE_CD_PROJECT"
+            - name: EMAIL
+              value: "REPLACE_EMAIL"
           envFrom:
             - secretRef:
                 name: cd-sa-creds
+            - secretRef:
+                name: fm-bot
       restartPolicy: OnFailure
   backoffLimit: 4
