@@ -15,8 +15,6 @@ spec:
           env:
             - name: APP_NAME
               value: "REPLACE_APP_NAME"
-            - name: CD_PROJECT
-              value: "REPLACE_CD_PROJECT"
             - name: EMAIL
               value: "REPLACE_EMAIL"
           envFrom:
