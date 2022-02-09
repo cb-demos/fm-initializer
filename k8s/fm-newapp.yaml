@@ -9,6 +9,9 @@ spec:
       containers:
         - name: fm-init
           image: docker.io/ldonleycb/fm-initializer:8
+          command:
+            - pnpm
+            - newapp
           env:
             - name: APP_NAME
               value: "REPLACE_APP_NAME"
